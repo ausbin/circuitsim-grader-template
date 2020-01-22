@@ -2,11 +2,9 @@ package edu.gatech.cs2110.circuitsim.launcher;
 
 import static org.junit.platform.engine.TestExecutionResult.Status.SUCCESSFUL;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
 
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -16,6 +14,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
 public class TesterLauncher {
+    private static final String TEST_MODULE = "tester";
     private static final String TEST_PACKAGE = "edu.gatech.cs2110.circuitsim.tests";
     private static final int MAX_FAILURES = 8;
     private String pkg;
@@ -147,7 +146,7 @@ public class TesterLauncher {
         LauncherDiscoveryRequestBuilder builder = new LauncherDiscoveryRequestBuilder();
 
         if (testClassName == null) {
-            builder.selectors(selectPackage(pkg));
+            builder.selectors(selectModule(TEST_MODULE));
         } else {
             String fullyQualifiedClassName = String.format("%s.%s", pkg, testClassName);
             builder.selectors(selectClass(fullyQualifiedClassName));
