@@ -2,25 +2,17 @@ package edu.gatech.cs2110.circuitsim.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Stream;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import edu.gatech.cs2110.circuitsim.api.InputPin;
 import edu.gatech.cs2110.circuitsim.api.MockRegister;
 import edu.gatech.cs2110.circuitsim.api.OutputPin;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitPin;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitRegister;
+import edu.gatech.cs2110.circuitsim.api.SubcircuitComponent;
 import edu.gatech.cs2110.circuitsim.api.SubcircuitTest;
 import edu.gatech.cs2110.circuitsim.extension.BasesConverter;
 import edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension;
@@ -29,22 +21,22 @@ import edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension;
 @ExtendWith(CircuitSimExtension.class)
 @SubcircuitTest(file="fsm.sim", subcircuit="fsm")
 public class FsmTests {
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private InputPin g;
 
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private InputPin clk;
 
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private InputPin rst;
 
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private InputPin en;
 
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private OutputPin a;
 
-    @SubcircuitRegister(bits=2, onlyRegister=true)
+    @SubcircuitComponent(bits=2, onlyInstance=true)
     private MockRegister stateReg;
 
     @DisplayName("Clock is connected")

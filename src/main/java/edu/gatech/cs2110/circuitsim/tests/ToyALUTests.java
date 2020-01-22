@@ -23,7 +23,7 @@ import edu.gatech.cs2110.circuitsim.api.InputPin;
 import edu.gatech.cs2110.circuitsim.api.OutputPin;
 import edu.gatech.cs2110.circuitsim.api.Restrictor;
 import edu.gatech.cs2110.circuitsim.api.Subcircuit;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitPin;
+import edu.gatech.cs2110.circuitsim.api.SubcircuitComponent;
 import edu.gatech.cs2110.circuitsim.api.SubcircuitTest;
 import edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension;
 import edu.gatech.cs2110.circuitsim.extension.BasesConverter;
@@ -45,16 +45,16 @@ public class ToyALUTests {
         }
     }
 
-    @SubcircuitPin(bits=4)
+    @SubcircuitComponent(bits=4)
     private InputPin a;
 
-    @SubcircuitPin(bits=4)
+    @SubcircuitComponent(bits=4)
     private InputPin b;
 
-    @SubcircuitPin(bits=2)
+    @SubcircuitComponent(bits=2)
     private InputPin sel;
 
-    @SubcircuitPin(bits=4)
+    @SubcircuitComponent(bits=4)
     private OutputPin out;
 
     @DisplayName("pass A")
