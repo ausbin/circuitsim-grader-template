@@ -7,6 +7,11 @@ public abstract class BaseMemory {
     public abstract void store(int address, int value);
 
     /**
+     * DO NOT MODIFY RESULT
+     */
+    public abstract int[] getContents();
+
+    /**
      * Loads a stream of a dat file into this component's memory. Format
      * is the same as the .dat files saved in the CircuitSim memory
      * editor window.

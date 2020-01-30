@@ -29,6 +29,14 @@ public class Ram extends BaseMemory {
     }
 
     /**
+     * DO NOT MODIFY RESULT
+     */
+    @Override
+    public int[] getContents() {
+        return ram.getMemoryContents(subcircuit.getCircuitState());
+    }
+
+    /**
      * Returns the internal CircuitSim {@code RAM} component this
      * object wraps.
      * <p>
