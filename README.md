@@ -1,6 +1,11 @@
 CircuitSim Autograder Template
 ==============================
 
+**Note: A more up-to-date version of this tool is maintained by the Georgia
+Tech CS 2110 TAs here: <https://github.com/zucchini/circuitsim-tester>. If you
+are a CS 2110 Student or TA, you should consider using that library instead of
+this template.**
+
 Javadoc for API: <https://ausbin.github.io/circuitsim-grader-template/>
 
 This repository aims to bridge the gap between the nitty-gritty details
