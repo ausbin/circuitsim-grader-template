@@ -199,7 +199,7 @@ restrictions. There is also support for whitelists.
 
 Combinational logic is easy enough, but what about a state machine? Consider the following:
 
-![fsm](https://i.imgur.com/EdzlS2i.png)
+![fsm](https://i.imgur.com/cnGx4Y9.png)
 
 <!---
 # dot -Tpng fsm.dot -Nfontname=Roboto -Nfontsize=10 -Efontname=Roboto -Efontsize=10 -o fsm.png
