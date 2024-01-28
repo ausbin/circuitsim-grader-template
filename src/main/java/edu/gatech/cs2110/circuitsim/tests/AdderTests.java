@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import edu.gatech.cs2110.circuitsim.api.InputPin;
 import edu.gatech.cs2110.circuitsim.api.OutputPin;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitPin;
+import edu.gatech.cs2110.circuitsim.api.SubcircuitComponent;
 import edu.gatech.cs2110.circuitsim.api.SubcircuitTest;
 import edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension;
 
@@ -17,19 +17,19 @@ import edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension;
 @ExtendWith(CircuitSimExtension.class)
 @SubcircuitTest(file="adder.sim", subcircuit="1-bit adder")
 public class AdderTests {
-    @SubcircuitPin(bits = 1)
+    @SubcircuitComponent(bits = 1)
     private InputPin a;
 
-    @SubcircuitPin(bits = 1)
+    @SubcircuitComponent(bits = 1)
     private InputPin b;
 
-    @SubcircuitPin(bits = 1)
+    @SubcircuitComponent(bits = 1)
     private InputPin cin;
 
-    @SubcircuitPin(bits = 1)
+    @SubcircuitComponent(bits = 1)
     private OutputPin sum;
 
-    @SubcircuitPin(bits = 1)
+    @SubcircuitComponent(bits = 1)
     private OutputPin cout;
 
     @ParameterizedTest(name="a:{0}, b:{1}, cin:{2} → cout:{3} + sum:{4}")

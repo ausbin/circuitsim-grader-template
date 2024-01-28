@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -12,7 +11,7 @@ import edu.gatech.cs2110.circuitsim.api.InputPin;
 import edu.gatech.cs2110.circuitsim.api.OutputPin;
 import edu.gatech.cs2110.circuitsim.api.Restrictor;
 import edu.gatech.cs2110.circuitsim.api.Subcircuit;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitPin;
+import edu.gatech.cs2110.circuitsim.api.SubcircuitComponent;
 import edu.gatech.cs2110.circuitsim.api.SubcircuitTest;
 import edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension;
 
@@ -31,10 +30,10 @@ public class NOTTests {
         }
     }
 
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private InputPin in;
 
-    @SubcircuitPin(bits=1)
+    @SubcircuitComponent(bits=1)
     private OutputPin out;
 
     @ParameterizedTest(name="NOT in:{0} → out:{1}")

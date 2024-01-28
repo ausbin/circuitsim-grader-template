@@ -2,26 +2,21 @@ package edu.gatech.cs2110.circuitsim.extension;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import edu.gatech.cs2110.circuitsim.api.*;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.Extension;
 
-import edu.gatech.cs2110.circuitsim.api.BasePin;
-import edu.gatech.cs2110.circuitsim.api.InputPin;
-import edu.gatech.cs2110.circuitsim.api.MockRegister;
-import edu.gatech.cs2110.circuitsim.api.OutputPin;
-import edu.gatech.cs2110.circuitsim.api.Restrictor;
-import edu.gatech.cs2110.circuitsim.api.Subcircuit;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitPin;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitRegister;
-import edu.gatech.cs2110.circuitsim.api.SubcircuitTest;
+import static edu.gatech.cs2110.circuitsim.api.Subcircuit.MemoryType.RAM;
+import static edu.gatech.cs2110.circuitsim.api.Subcircuit.MemoryType.ROM;
+import static edu.gatech.cs2110.circuitsim.api.Subcircuit.PulserType.BUTTON;
+import static edu.gatech.cs2110.circuitsim.api.Subcircuit.PulserType.CLOCK;
+import static edu.gatech.cs2110.circuitsim.api.SubcircuitComponent.Type.TUNNEL;
 
 /**
  * Extends JUnit to understand testing CircuitSim subcircuits.
@@ -53,9 +48,7 @@ public class CircuitSimExtension implements Extension, BeforeAllCallback, Before
             runRestrictor(subcircuit, restrictor);
         }
 
-        fieldInjections = new LinkedList<>();
-        fieldInjections.addAll(generatePinFieldInjections(testClass));
-        fieldInjections.addAll(generateRegFieldInjections(testClass));
+        fieldInjections = generateFieldInjections(testClass);
     }
 
     @Override
@@ -97,67 +90,117 @@ public class CircuitSimExtension implements Extension, BeforeAllCallback, Before
         }
     }
 
-    private Collection<FieldInjection> generatePinFieldInjections(Class<?> testClass) {
-        List<FieldInjection> fieldInjections = new LinkedList<>();
-
-        List<Field> pinFields = Arrays.stream(testClass.getDeclaredFields())
-                                      .filter(field -> field.isAnnotationPresent(SubcircuitPin.class))
-                                      .collect(Collectors.toList());
+    private List<FieldInjection> generateFieldInjections(Class<?> testClass) {
+        Map<Class<?>, Function<Field, FieldInjection>> fieldInjectors = new HashMap<>();
+        fieldInjectors.put(InputPin.class,     this::generatePinFieldInjection);
+        fieldInjectors.put(OutputPin.class,    this::generatePinFieldInjection);
+        fieldInjectors.put(Ram.class,          this::generateMemoryFieldInjection);
+        fieldInjectors.put(Rom.class,          this::generateMemoryFieldInjection);
+        fieldInjectors.put(Register.class,     this::generateRegFieldInjection);
+        fieldInjectors.put(MockRegister.class, this::generateRegFieldInjection);
+        fieldInjectors.put(Clock.class,        this::generatePulserFieldInjection);
+        fieldInjectors.put(Button.class,       this::generatePulserFieldInjection);
 
         // TODO: Detect duplicate pins (`Pin a' and `Pin A' are distinct
         //       fields in Java but not here). Easy solution: sort the
         //       stream by canonicalName(field.getName()) and iterate
         //       over the resulting List, comparing each with the
         //       next
-
-        for (Field pinField : pinFields) {
-            if (!BasePin.class.isAssignableFrom(pinField.getType())) {
-                throw new IllegalArgumentException(
-                    "Test class fields annotated with @SubcircuitPin should be of type InputPin or OutputPin");
-            }
-
-            boolean wantInputPin = InputPin.class.isAssignableFrom(pinField.getType());
-            SubcircuitPin pinAnnotation = pinField.getDeclaredAnnotation(SubcircuitPin.class);
-            String pinLabel = pinAnnotation.label().isEmpty()? pinField.getName() : pinAnnotation.label();
-
-            BasePin pinWrapper = subcircuit.lookupPin(pinLabel, wantInputPin, pinAnnotation.bits());
-            fieldInjections.add(new FieldInjection(pinField, pinWrapper));
-        }
-
-        return fieldInjections;
+        return Arrays.stream(testClass.getDeclaredFields())
+                     .filter(field -> field.isAnnotationPresent(SubcircuitComponent.class))
+                     .map(field -> Optional.ofNullable(fieldInjectors.get(field.getType()))
+                                           .orElseThrow(() -> new IllegalArgumentException(
+                                               "Test class field " + field.getName() + " in " +
+                                               testClass.getCanonicalName() + " annotated with " +
+                                               "@SubcircuitComponent has unknown type " + field.getType()))
+                                           .apply(field))
+                     .collect(Collectors.toList());
     }
 
-    private Collection<FieldInjection> generateRegFieldInjections(Class<?> testClass) {
-        List<FieldInjection> fieldInjections = new LinkedList<>();
+    private FieldInjection generatePinFieldInjection(Field field) {
+        SubcircuitComponent pinAnnotation = field.getDeclaredAnnotation(SubcircuitComponent.class);
 
-        List<Field> regFields = Arrays.stream(testClass.getDeclaredFields())
-                                      .filter(field -> field.isAnnotationPresent(SubcircuitRegister.class))
-                                      .collect(Collectors.toList());
-
-        // TODO: Like in generatePinFieldInjections(), search for dupe
-        //       fields in the class itself
-
-        for (Field regField : regFields) {
-            if (!MockRegister.class.isAssignableFrom(regField.getType())) {
-                throw new IllegalArgumentException(
-                    "Test class fields annotated with @SubcircuitRegister should be of type MockRegister");
-            }
-
-            SubcircuitRegister regAnnotation = regField.getDeclaredAnnotation(SubcircuitRegister.class);
-
-            // I added this field to the annotation so that we don't
-            // break existing tests down the road if we implement this
-            if (!regAnnotation.onlyRegister()) {
-                throw new UnsupportedOperationException(
-                    "@SubcircuitRegister(onlyRegister=false, ...) is not yet supported. " +
-                    "(Note: the default is onlyRegister=false, so you'll need to write onlyRegister=true.)");
-            }
-
-            MockRegister reg = subcircuit.mockOnlyRegister(regAnnotation.bits());
-            fieldInjections.add(new FieldInjection(regField, reg));
+        if (pinAnnotation.bits() <= 0) {
+            throw new IllegalArgumentException(field.getName() +
+                " is an Input/Output Pins, so @SubcircuitComponent needs a positive bits parameter");
         }
 
-        return fieldInjections;
+        BasePin pinWrapper;
+        if (pinAnnotation.type() == TUNNEL) {
+            if (pinAnnotation.onlyInstance()) {
+                throw new IllegalArgumentException(
+                    field.getName() + " is a tunnel, please don't specify " +
+                    "onlyInstance on @SubcircuitComponent, you're better than this");
+            }
+            if (pinAnnotation.recursiveSearch()) {
+                throw new IllegalArgumentException(
+                    field.getName() + " is a tunnel, recursiveSearch on " +
+                    "@SubcircuitComponent is not implemented");
+            }
+
+            String label = pinAnnotation.label().isEmpty()? field.getName() : pinAnnotation.label();
+            pinWrapper = subcircuit.snitchTunnel(label, pinAnnotation.bits());
+        } else { // INFER
+            boolean wantInputPin = InputPin.class.equals(field.getType());
+            String pinLabel = pinAnnotation.onlyInstance()? null :
+                              pinAnnotation.label().isEmpty()? field.getName() : pinAnnotation.label();
+            pinWrapper = subcircuit.lookupPin(pinLabel, wantInputPin, pinAnnotation.bits(), pinAnnotation.recursiveSearch());
+        }
+
+        return new FieldInjection(field, pinWrapper);
+    }
+
+    private FieldInjection generateRegFieldInjection(Field field) {
+        SubcircuitComponent regAnnotation = field.getDeclaredAnnotation(SubcircuitComponent.class);
+
+        if (regAnnotation.bits() <= 0) {
+            throw new IllegalArgumentException(field.getName() +
+                    " is an Register, so @SubcircuitComponent needs a positive bits parameter");
+        }
+
+        String regLabel = regAnnotation.onlyInstance()? null :
+                          regAnnotation.label().isEmpty()? field.getName() : regAnnotation.label();
+        Register reg = subcircuit.lookupRegister(regLabel, regAnnotation.bits(),
+                                                 regAnnotation.recursiveSearch());
+
+        boolean wantMockRegister = MockRegister.class.isAssignableFrom(field.getType());
+        if (wantMockRegister) {
+            MockRegister mockRegister = reg.mock();
+            return new FieldInjection(field, mockRegister);
+        } else {
+            return new FieldInjection(field, reg);
+        }
+    }
+
+    private FieldInjection generateMemoryFieldInjection(Field field) {
+        SubcircuitComponent componentAnnotation = field.getDeclaredAnnotation(SubcircuitComponent.class);
+
+        if (componentAnnotation.bits() <= 0) {
+            throw new IllegalArgumentException(field.getName() +
+                    " is RAM/ROM, so @SubcircuitComponent needs a positive bits parameter");
+        }
+
+        String label = componentAnnotation.onlyInstance()? null :
+                       componentAnnotation.label().isEmpty()? field.getName() : componentAnnotation.label();
+        Subcircuit.MemoryType type = field.getType().equals(Ram.class)? RAM : ROM;
+        BaseMemory wrapper = subcircuit.lookupMemory(label, componentAnnotation.bits(),
+                                                     componentAnnotation.recursiveSearch(), type);
+        return new FieldInjection(field, wrapper);
+    }
+
+    private FieldInjection generatePulserFieldInjection(Field field) {
+        SubcircuitComponent componentAnnotation = field.getDeclaredAnnotation(SubcircuitComponent.class);
+
+        if (componentAnnotation.bits() >= 0) {
+            throw new IllegalArgumentException(field.getName() +
+                    " is a Clock/Button, so @SubcircuitComponent does not need a bits parameter");
+        }
+
+        String label = componentAnnotation.onlyInstance()? null :
+                       componentAnnotation.label().isEmpty()? field.getName() : componentAnnotation.label();
+        Subcircuit.PulserType type = field.getType().equals(Button.class)? BUTTON : CLOCK;
+        MockPulser mock = subcircuit.mockPulser(label,  componentAnnotation.bits(),  componentAnnotation.recursiveSearch(), type);
+        return new FieldInjection(field, mock);
     }
 
     private static class FieldInjection {

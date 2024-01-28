@@ -22,7 +22,7 @@ import java.lang.annotation.Retention;
  * @see OutputPin
  */
 @Retention(RUNTIME)
-public @interface SubcircuitPin {
+public @interface SubcircuitComponent {
     /**
      * The label of a matching Pin. If empty (the default), {@link
      * edu.gatech.cs2110.circuitsim.extension.CircuitSimExtension} will
@@ -37,5 +37,28 @@ public @interface SubcircuitPin {
      *
      * @return The bit size of a matching Pin.
      */
-    int bits();
+    // TODO FIXME document when this is requried
+    int bits() default -1;
+
+    boolean onlyInstance() default false;
+
+    // TODO FIXME document
+    boolean recursiveSearch() default false;
+
+    /**
+     * The type of "pin". The default is a literal existing Pin
+     * component, but you can set this to {@code TUNNEL} to spy on the
+     * value of a tunnel by attaching an OutputPin to it. (The label is
+     * then the label of the tunnel you want to spy instead of the label
+     * of an existing pin.)
+     *
+     * @return An enum value determining if this should spy on a tunnel
+     *         instead of controlling a Pin component
+     */
+    Type type() default Type.INFER;
+
+    enum Type {
+        INFER,
+        TUNNEL,
+    }
 }
